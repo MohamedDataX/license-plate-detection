@@ -176,7 +176,7 @@ async def get_stats():
 @app.post("/predict", response_model=BatchPredictionResponse, tags=["Prediction"])
 async def predict_unified(
     files: List[UploadFile] = File(...),
-    score_threshold: float = Query(0.3, ge=0.0, le=1.0),
+    score_threshold: float = Query(0.1, ge=0.0, le=1.0), #0.3
     nms_threshold: float = Query(0.4, ge=0.0, le=1.0),
     return_base64: bool = Query(False, description="Retourner l'image encodée en base64 pour l'interface UI")
 ):

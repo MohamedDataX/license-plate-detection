@@ -534,7 +534,7 @@ def annotate_image(
 # ============================================================================
 def predict_batch_simple(
     images: List[Image.Image],
-    score_threshold: float = 0.3,
+    score_threshold: float = 0.15, #0.3
     nms_threshold: float = 0.4
 ) -> List[Dict]:
     """
