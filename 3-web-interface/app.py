@@ -26,8 +26,8 @@ from typing import List, Dict, Optional
 # ============================================================================
 API_URL = "http://localhost:8000"
 HISTORY_CSV = Path(__file__).parent / "history.csv"
-TEST_IMAGES_DIR = Path("/Users/zazak/Documents/Studies/M1 - ESGI/Trimestre 2/Projet Spark Core/license-plate-detection-dataset-10125-images/test/images")
-
+#TEST_IMAGES_DIR = Path("/Users/zazak/Documents/Studies/M1 - ESGI/Trimestre 2/Projet Spark Core/license-plate-detection-dataset-10125-images/test/images")
+TEST_IMAGES_DIR = Path("/Users/mohamedaitsidihou/Documents/Dataset_Test/test/images")
 st.set_page_config(
     page_title="Vision Plates | AI Analytics",
     page_icon="⚡",
@@ -257,7 +257,7 @@ if page == "📥 Upload Analysis":
         with st.spinner("Processing on Spark Cluster..."):
             result = predict_batch_images(uploaded_files)
             if result and result.get("success"):
-                st.balloons()
+                #st.balloons()
                 st.success(f"Execution successful: {result['total_plates']} detections across {len(result['results'])} images.")
                 
                 for i, res in enumerate(result['results']):
