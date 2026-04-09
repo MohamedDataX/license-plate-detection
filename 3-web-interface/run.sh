@@ -1,14 +1,14 @@
 #!/bin/bash
 # ==============================================
-# Script de démarrage pour License Plate Detection
+# License Plate Detection Startup Script
 # ==============================================
 
-# Couleurs pour les logs
+#colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m' 
 
 echo -e "${BLUE}"
 echo "╔══════════════════════════════════════════════════════════╗"
@@ -16,15 +16,15 @@ echo "║       License Plate Detection - Startup Script           ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
-# Vérifier si on est dans le bon répertoire
+# Check current directory
 if [ ! -f "api.py" ] || [ ! -f "app.py" ]; then
-    echo -e "${RED}❌ Error: Please run this script from the 3-web-interface directory${NC}"
+    echo -e "${RED}Error: Please run this script from the 3-web-interface directory${NC}"
     exit 1
 fi
 
-# Fonction pour arrêter les processus
+# Stop processes
 cleanup() {
-    echo -e "\n${YELLOW}🛑 Stopping services...${NC}"
+    echo -e "\n${YELLOW}Stopping services...${NC}"
     if [ ! -z "$API_PID" ]; then
         kill $API_PID 2>/dev/null
     fi
@@ -36,47 +36,47 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
-# Mode
+#selection mode
 MODE=${1:-"both"}
 
 case $MODE in
     "api")
-        echo -e "${GREEN}🚀 Starting FastAPI only...${NC}"
+        echo -e "${GREEN}Starting FastAPI only...${NC}"
         echo -e "${BLUE}   URL: http://localhost:8000${NC}"
         echo -e "${BLUE}   Docs: http://localhost:8000/docs${NC}"
         python3 api.py
         ;;
     "streamlit")
-        echo -e "${GREEN}🚀 Starting Streamlit only...${NC}"
+        echo -e "${GREEN}Starting Streamlit only...${NC}"
         echo -e "${BLUE}   URL: http://localhost:8501${NC}"
         streamlit run app.py --server.port 8501
         ;;
     "both")
-        echo -e "${GREEN}🚀 Starting FastAPI + Streamlit...${NC}"
+        echo -e "${GREEN}Starting FastAPI + Streamlit...${NC}"
         echo ""
         echo -e "${BLUE}   FastAPI:   http://localhost:8000${NC}"
         echo -e "${BLUE}   API Docs:  http://localhost:8000/docs${NC}"
         echo -e "${BLUE}   Streamlit: http://localhost:8501${NC}"
         echo ""
 
-        # Démarrer FastAPI en arrière-plan
+        # Start FastAPI in background
         echo -e "${YELLOW}Starting FastAPI...${NC}"
         python3 api.py &
         API_PID=$!
 
-        # Attendre que l'API soit prête
+        # Wait for API to be ready
         sleep 3
 
-        # Démarrer Streamlit
+        # Start Streamlit
         echo -e "${YELLOW}Starting Streamlit...${NC}"
         streamlit run app.py --server.port 8501 &
         STREAMLIT_PID=$!
 
         echo ""
-        echo -e "${GREEN}✅ Both services started!${NC}"
+        echo -e "${GREEN}Both services started!${NC}"
         echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
 
-        # Attendre que les processus se terminent
+        # Wait for processes
         wait
         ;;
     *)

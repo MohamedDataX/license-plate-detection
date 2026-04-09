@@ -5,12 +5,14 @@ from image_utils import letterbox_resize_image
 
 
 def build_bboxes(df_labels_parsed):
-    """Aggregate bounding boxes by image"""
+    """Group bounding boxes by image"""
     df_bboxes = (
         df_labels_parsed
+        # Combine coordinates into an array
         .withColumn("reg_target", F.array("cx", "cy", "w", "h"))
         .withColumn("pos_mask", F.lit(1.0))
         .groupBy("image_name")
+        # Collect lists of targets for each image
         .agg(
             F.collect_list("class_id").alias("cls_targets"),
             F.collect_list("reg_target").alias("reg_targets"),
@@ -21,11 +23,12 @@ def build_bboxes(df_labels_parsed):
 
 
 def join_data(df_images, df_bboxes):
-    """Join images with bounding boxes"""
+    """Join images and labels"""
     print("Joining images and labels...")
 
     df = df_images.join(df_bboxes, on="image_name", how="left")
 
+    # Handle null values for images without labels
     df = (
         df
         .withColumn("cls_targets", F.when(F.col("cls_targets").isNull(), F.array()).otherwise(F.col("cls_targets")))
@@ -36,37 +39,15 @@ def join_data(df_images, df_bboxes):
     return df
 
 
-# UDF pour transformer les labels après letterbox
+# UDF to update labels after letterbox resize
 @F.udf(ArrayType(ArrayType(FloatType())))
 def transform_labels_letterbox(reg_targets, scale, pad_x, pad_y):
-    """
-    Transforme les coordonnées des bounding boxes pour correspondre
-    à l'image letterboxée.
-
-    Args:
-        reg_targets: Liste de [cx, cy, w, h] normalisés [0,1] par rapport à l'image originale
-        scale: Facteur d'échelle appliqué lors du letterbox (ex: 0.8 si image réduite à 80%)
-        pad_x: Padding horizontal normalisé [0,1] (ex: 0.1 si 10% de padding)
-        pad_y: Padding vertical normalisé [0,1]
-
-    Returns:
-        Liste de [cx_new, cy_new, w_new, h_new] normalisés par rapport à l'image letterboxée 256x256
-
-    Formula (pour coordonnées normalisées):
-        - La région de l'image dans le letterbox occupe:
-          - largeur: (1 - 2*pad_x) = new_w/IMG_SIZE
-          - hauteur: (1 - 2*pad_y) = new_h/IMG_SIZE
-        - cx_new = cx_orig * (1 - 2*pad_x) + pad_x
-        - cy_new = cy_orig * (1 - 2*pad_y) + pad_y
-        - w_new = w_orig * (1 - 2*pad_x)
-        - h_new = h_orig * (1 - 2*pad_y)
-    """
     if reg_targets is None or scale is None:
         return []
 
     transformed = []
-    # La région de l'image dans le letterbox
-    img_region_w = 1.0 - 2.0 * pad_x  # Ex: si pad_x=0.1, img_region_w=0.8
+    # Calculate image area within the letterbox
+    img_region_w = 1.0 - 2.0 * pad_x
     img_region_h = 1.0 - 2.0 * pad_y
 
     for bbox in reg_targets:
@@ -75,7 +56,7 @@ def transform_labels_letterbox(reg_targets, scale, pad_x, pad_y):
 
         cx_orig, cy_orig, w_orig, h_orig = bbox[0], bbox[1], bbox[2], bbox[3]
 
-        # Transformer les coordonnées
+        # Shift and scale coordinates
         cx_new = cx_orig * img_region_w + pad_x
         cy_new = cy_orig * img_region_h + pad_y
         w_new = w_orig * img_region_w
@@ -87,16 +68,13 @@ def transform_labels_letterbox(reg_targets, scale, pad_x, pad_y):
 
 
 def resize_images(df):
-    """
-    Letterbox resize images and transform labels accordingly.
-    Preserves aspect ratio with black padding.
-    """
+    """Letterbox resize images and update labels"""
     print("Letterbox resizing images...")
 
-    # Appliquer le letterbox resize (retourne struct avec image + infos transformation)
+    # Run resize + get transformation parameters
     df = df.withColumn("letterbox_result", letterbox_resize_image("raw_content"))
 
-    # Extraire l'image et les paramètres de transformation
+    # Extract image data and padding info
     df = (
         df
         .withColumn("images", F.col("letterbox_result.image"))
@@ -106,10 +84,10 @@ def resize_images(df):
         .drop("raw_content", "letterbox_result")
     )
 
-    # Filtrer les erreurs de resize
+    # Remove failed resizes
     df = df.filter(F.col("images").isNotNull())
 
-    # Transformer les labels pour correspondre au letterbox
+    # Map labels to new image coordinates
     df = df.withColumn(
         "reg_targets",
         transform_labels_letterbox(
@@ -120,7 +98,7 @@ def resize_images(df):
         )
     )
 
-    # Supprimer les colonnes temporaires (optionnel, garder pour debug)
+    # Clean up temp columns
     df = df.drop("lb_scale", "lb_pad_x", "lb_pad_y")
 
     return df

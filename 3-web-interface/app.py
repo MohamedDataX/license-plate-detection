@@ -26,7 +26,7 @@ from typing import List, Dict, Optional
 # ============================================================================
 API_URL = "http://localhost:8000"
 HISTORY_CSV = Path(__file__).parent / "history.csv"
-#TEST_IMAGES_DIR = Path("/Users/zazak/Documents/Studies/M1 - ESGI/Trimestre 2/Projet Spark Core/license-plate-detection-dataset-10125-images/test/images")
+
 TEST_IMAGES_DIR = Path("/Users/mohamedaitsidihou/Documents/Dataset_Test/test/images")
 st.set_page_config(
     page_title="Vision Plates | AI Analytics",
@@ -234,7 +234,7 @@ with st.sidebar:
     
     st.markdown("---")
     status_text = "🟢 System Online" if api_state.get("online") else "🔴 Offline"
-    st.info(f"**Backend:** {status_text}\n\n**Model:** {'✅ Operational' if api_state.get('model_loaded') else '❌ Not Loaded'}")
+    st.info(f"**Backend:** {status_text}\n\n**Model:** {'🟢 Operational' if api_state.get('model_loaded') else '🔴 Not Loaded'}")
 
 # ============================================================================
 # MAIN INTERFACE
@@ -248,7 +248,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 if page == "📥 Upload Analysis":
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("📥 Intelligent Batch Upload")
+    st.subheader("📥  Upload")
     st.write("Drag and drop multiple images for high-speed concurrent analysis.")
     
     uploaded_files = st.file_uploader("Sélectionnez vos images", type=["jpg", "jpeg", "png"], accept_multiple_files=True, label_visibility="collapsed")
@@ -284,7 +284,7 @@ if page == "📥 Upload Analysis":
 elif page == "📂 Sample Dataset":
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("📂 Interactive Model Validation")
-    st.write("Stress test the model using historical data from the curated test set.")
+    st.write("Test the model using historical data from the curated test set.")
     
     if st.button("🔄 Refresh Data Samples") or "sample_paths" not in st.session_state:
         st.session_state["sample_paths"] = get_dataset_samples(24)
@@ -366,12 +366,3 @@ elif page == "🕘 Prediction History":
                     except:
                         st.code(item["detections"])
     st.markdown('</div>', unsafe_allow_html=True)
-
-# Footer Styling
-st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown(
-    '<div style="text-align:center; color:#64748b; font-size:0.85rem; letter-spacing: 0.05em; opacity: 0.7;">'
-    'ENGINEERED BY <strong>NEURAL PLATES LAB</strong> &bull; POWERED BY <strong>PYSPARK ENGINE</strong>'
-    '</div>',
-    unsafe_allow_html=True
-)

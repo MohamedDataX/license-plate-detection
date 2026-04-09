@@ -1,11 +1,3 @@
-"""
-Module d'inférence pour la détection de plaques d'immatriculation.
-Centralise le chargement du modèle et les fonctions de prédiction.
-
-Usage:
-    from inference import get_model, predict_single_image, predict_batch_images
-"""
-
 import io
 import sys
 import csv
@@ -28,7 +20,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, udf, lit, element_at, split
 from pyspark.sql.types import StructType, StructField, StringType, BinaryType
 
-# Ajouter le chemin vers le module model
+# add path
 MODEL_TRAINING_PATH = Path(__file__).parent.parent / "2-model-training"
 sys.path.insert(0, str(MODEL_TRAINING_PATH))
 
@@ -81,8 +73,8 @@ class ModelManager:
         device = device or DEVICE
         self._device = torch.device(device)
 
-        print(f"🔄 Loading model from {checkpoint_path}...")
-        print(f"   Device: {self._device}")
+        print(f"Loading model from {checkpoint_path}...")
+        print(f"Device: {self._device}")
 
         # Charger le checkpoint
         checkpoint = torch.load(checkpoint_path, map_location=self._device, weights_only=False)
@@ -172,7 +164,7 @@ def is_model_loaded() -> bool:
 
 
 # ============================================================================
-# PREPROCESSING - LETTERBOX (Cohérent avec Spark)
+# PREPROCESSING - LETTERBOX SPARK
 # ============================================================================
 def letterbox_image(image: Image.Image) -> Tuple[Image.Image, float, float, float]:
     """
@@ -386,7 +378,7 @@ def _run_spark_pipeline(
     Exécute le pipeline Spark.
     Si input_source est une string (chemin d'un dossier), charge via `spark.read.format("binaryFile")`.
     Sinon, charge depuis une liste python.
-    Maximise l'utilisation de Spark Dataframes et UDFs.
+    utilisation de Spark Dataframes + UDFs
     """
     spark = get_spark()
     
